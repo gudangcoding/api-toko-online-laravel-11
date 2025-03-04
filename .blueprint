@@ -1,0 +1,32 @@
+created:
+    - database/factories/CategoriesFactory.php
+    - database/factories/ProductFactory.php
+    - database/factories/OrderFactory.php
+    - database/factories/OrderItemFactory.php
+    - database/factories/PaymentFactory.php
+    - database/factories/ShippingFactory.php
+    - database/migrations/2025_02_17_124345_create_categories_table.php
+    - database/migrations/2025_02_17_124346_create_products_table.php
+    - database/migrations/2025_02_17_124347_create_orders_table.php
+    - database/migrations/2025_02_17_124348_create_order_items_table.php
+    - database/migrations/2025_02_17_124349_create_payments_table.php
+    - database/migrations/2025_02_17_124350_create_shippings_table.php
+    - app/Models/Categories.php
+    - app/Models/Product.php
+    - app/Models/Order.php
+    - app/Models/OrderItem.php
+    - app/Models/Payment.php
+    - app/Models/Shipping.php
+    - database/seeders/CategoriesSeeder.php
+    - database/seeders/ProductSeeder.php
+    - database/seeders/UserSeeder.php
+    - database/seeders/OrderSeeder.php
+    - database/seeders/OrderItemSeeder.php
+models:
+    User: { name: string, email: string, email_verified_at: 'timestamp nullable', password: string, remember_token: 'string:100 nullable' }
+    Categories: { name: string, relationships: { hasMany: Product } }
+    Product: { Categories_id: 'foreignId:Categories', name: string, description: longtext, image: string, price: integer, stock: integer, relationships: { hasMany: OrderItem } }
+    Order: { user_id: 'foreignId:user', total: integer, status: 'enum:pending,paid,shipped,delivered,canceled default:pending', payment_status: 'enum:unpaid,paid', shipping_status: 'enum:pending,shipped,delivered,canceled default:pending', relationships: { hasMany: OrderItem, belongsTo: 'user, shipping, payment' } }
+    OrderItem: { order_id: 'foreignId:order', product_id: 'foreignId:product', quantity: integer, price: integer, relationships: { belongsTo: 'order, product' } }
+    Payment: { order_id: 'foreignId:order', payment_type: string, payment_code: string, payment_status: 'enum:pending,paid,failed default:pending', timestamps: timestamps, relationships: { hasMany: order } }
+    Shipping: { order_id: 'foreignId:order', courier: string, service: string, cost: integer, tracking_number: string, timestamps: timestamps, relationships: { hasMany: order } }
