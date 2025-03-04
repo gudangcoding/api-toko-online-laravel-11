@@ -1,66 +1,100 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+Toko Online Laravel dan react native Integrasi Midtrans dan raja Ongkir
+laravel : C:\laragon\www\tokoku
+1. install Laravel via laragon
+2. buka proyek di vscode
+3. install blueprint
+	composer require -W --dev laravel-shift/blueprint
+	composer require --dev jasonmccreary/laravel-test-assertions //laravel test
+	php artisan blueprint:new //membuat draft.yaml
+	php artisan blueprint:build //membuat file laravel
+	php artisan migrate:fresh
+	php artisan db:seed
+	php artisan blueprint:erase //menghapus file sebelumnya yang akan dibuat
+4. buat skema di draft.yaml //model,migrasi,seeder dan factory
+5. migrate database
+6. install laravel filament //laravel panel dan user: a@a.com, pass:123
+	1. composer require filament/filament:"^3.2" -W
+ 	2. php artisan filament:install --panels
+	3. php artisan make:filament-user
+	4. php artisan filament:optimize
+	5. php artisan filament:optimize-clear
+	6. jangan lupa aktifkan opcache di server laragon menu->php->ekstensi->opcache
+	7. php artisan make:filament-resource Categories --generate
+	8 php artisan make:filament-resource Product --generate
+	9.php artisan make:filament-resource Order --generate
+	10. php artisan make:filament-resource User --generate
+	11. php artisan make:filament-relation-manager Order OrderItem order_id
+	12. php artisan make:filament-relation-manager Order Payment order_id
+	13. php artisan make:filament-relation-manager Order Shipping order_id
+7. Buat API
+	php artisan install:api  //akan membuat tabel personal_access_token, lalu php artisan migrate
+	install midtrans dan rajaongkir dulu
+	composer require midtrans/midtrans-php  ->buat services/rajaongkir
+	composer require guzzlehttp/guzzle
+	composer require rajaongkir/rajaongkir-php ->buat services/rajaongkir
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+	php artisan make:controller Api/AuthController --api
+	php artisan make:controller Api/CategoryController --api
+	php artisan make:controller Api/ProductController --api
+	php artisan make:controller Api/OrderController --api
+	php artisan make:controller Api/PaymentController --api
+	php artisan make:controller Api/ShippingController --api
 
-## About Laravel
+9.Testing api divscode menggunakan ekstensi Postman
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+10. Buat Proyek React Native dengan Expo
+	1. npm install -g react-native-cli //install react cli supaya bisa buat proyek react
+	2. npx create-expo-app@latest -t tabs/blank //buat proyek expo template bottom tabs atau blank default blank
+	3. npm i expo axios @react-native-async-storage/async-storage @reduxjs/toolkit react-redux
+11. npx expo install react-dom react-native-web @react-navigation/web @expo/metro-runtime //install ini untuk dijalanakan di web
+12. Buat File dan struktur folder, dalam folder app/(tabs) berisi,home,whislist,history,profil, kemudian cart,checkout, onboarding,splash,login,register
+13. Buat folder redux/store.js dan buat masing masing slicer
+14. buat file di constant/restApi.js dengan kode :
+	import axios from 'axios';
+	import AsyncStorage from '@react-native-async-storage/async-storage';
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+	// Base URL JSON Server
+	const BASE_URL = 'http://localhost:3001';
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+	// Fungsi GET
+	export const getApi = async (endpoint, token = null) => {
+  	try {
+    	const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    	const response = await axios.get(`${BASE_URL}/${endpoint}`, { headers });
+    	return response.data;
+  	} catch (error) {
+    	console.error(`Error GET ${endpoint}:`, error);
+    	throw error;
+  	}
+	};
 
-## Learning Laravel
+	// Fungsi POST
+	export const postApi = async (endpoint, data, token = null) => {
+  	try {
+    	const headers = { 'Content-Type': 'application/json' };
+    	if (token) headers.Authorization = `Bearer ${token}`;
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+    	const response = await axios.post(`${BASE_URL}/${endpoint}`, data, { headers });
+    	return response.data;
+  	} catch (error) {
+    	console.error(`Error POST ${endpoint}:`, error);
+    		throw error;
+  	}
+	};
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+	// Fungsi menyimpan token ke AsyncStorage
+	export const saveToken = async (token) => {
+  	await AsyncStorage.setItem('token', token);
+	};
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+	// Fungsi mendapatkan token dari AsyncStorage
+	export const getToken = async () => {
+  	return await AsyncStorage.getItem('token');
+	};
 
-## Laravel Sponsors
+	// Fungsi menghapus token dari AsyncStorage
+	export const removeToken = async () => {
+  	await AsyncStorage.removeItem('token');
+	};
+15. buat file redux/store.js
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
-
-### Premium Partners
-
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
-
-## Contributing
-
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
-
-## Code of Conduct
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
