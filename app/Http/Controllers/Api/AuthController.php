@@ -60,12 +60,13 @@ class AuthController extends Controller
 
             $user = User::select('*')->find(auth()->guard()->user()->id);
             $success =  $user;
-            $success['token'] =  $user->createToken('MyApp', ['user'])->plainTextToken;
+            $token =  $user->createToken('MyApp', ['user'])->plainTextToken;
 
             return response()->json([
                 'success' => true,
                 'message' => 'Login success!',
-                'data' => $success,
+                'user' => $user,
+                'token' => $token
             ], 201);
         } else {
             return response()->json([
