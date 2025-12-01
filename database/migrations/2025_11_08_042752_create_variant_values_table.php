@@ -11,14 +11,17 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('payments', function (Blueprint $table) {
+        Schema::disableForeignKeyConstraints();
+
+        Schema::create('variant_values', function (Blueprint $table) {
             $table->id();
-            $table->string('order_id');
-            $table->string('payment_type');
-            $table->string('payment_code');
-            $table->enum('payment_status', ["pending","paid","failed"])->default('pending');
+            $table->foreignId('product_variant_id')->constrained();
+            $table->foreignId('variant_option_id')->constrained();
+            $table->string('value');
             $table->timestamps();
         });
+
+        Schema::enableForeignKeyConstraints();
     }
 
     /**
@@ -26,6 +29,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('payments');
+        Schema::dropIfExists('variant_values');
     }
 };

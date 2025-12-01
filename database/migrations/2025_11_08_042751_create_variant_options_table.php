@@ -11,13 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('shippings', function (Blueprint $table) {
+        Schema::create('variant_options', function (Blueprint $table) {
             $table->id();
-            $table->string('order_id');
-            $table->string('courier');
-            $table->string('service');
-            $table->integer('cost');
-            $table->string('tracking_number');
+            $table->string('name');
             $table->timestamps();
         });
     }
@@ -27,6 +23,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('shippings');
+        Schema::dropIfExists('variant_options');
     }
 };

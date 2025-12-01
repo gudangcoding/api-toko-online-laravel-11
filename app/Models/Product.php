@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Product extends Model
 {
@@ -16,29 +17,37 @@ class Product extends Model
      * @var array
      */
     protected $fillable = [
-        'Categories_id',
         'name',
+        'category_id',
+        'slug',
         'description',
-        'image',
-        'price',
+        'base_price',
+        'rating',
+        'likes',
         'stock',
     ];
 
     /**
-     * The attributes that should be cast to native types.
+     * Get the attributes that should be cast.
      *
-     * @var array
+     * @return array<string, string>
      */
-    protected $casts = [
-        'id' => 'integer',
-    ];
-
-    public function orderItems()
+    protected function casts(): array
     {
-        return $this->belongsTo(OrderItem::class);
+        return [
+            'id' => 'integer',
+            'base_price' => 'decimal:2',
+            'rating' => 'decimal:2',
+        ];
     }
-    public function categories()
+
+    public function productVariants(): HasMany
     {
-        return $this->belongsTo(Categories::class);
+        return $this->hasMany(ProductVariant::class);
+    }
+
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(Categories::class, 'category_id');
     }
 }

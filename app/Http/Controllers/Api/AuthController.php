@@ -28,8 +28,8 @@ class AuthController extends Controller
         $input = $request->all();
         $input['password'] = Hash::make($input['password']);
         $user = User::create($input);
-        $success =  $user;
-        $success['token'] =  $user->createToken('Tokoku', ['user'])->plainTextToken;
+        $success = $user;
+        $success['token'] = $user->createToken('Tokoku', ['user'])->plainTextToken;
         if ($success) {
             return response()->json([
                 'success' => true,
@@ -59,8 +59,8 @@ class AuthController extends Controller
         if (Auth::guard()->attempt(['email' => $request->email, 'password' => $request->password])) {
 
             $user = User::select('*')->find(auth()->guard()->user()->id);
-            $success =  $user;
-            $token =  $user->createToken('MyApp', ['user'])->plainTextToken;
+            $success = $user;
+            $token = $user->createToken('MyApp', ['user'])->plainTextToken;
 
             return response()->json([
                 'success' => true,
@@ -89,6 +89,7 @@ class AuthController extends Controller
     }
 
     // Fungsi untuk mendapatkan profil pengguna
+   
     public function profile(Request $request, $id)
     {
         $user = User::find($id);
@@ -98,6 +99,47 @@ class AuthController extends Controller
             ], 404);
         }
         return response()->json([
+            'user' => $user,
+        ], 200);
+    }
+
+    // Update profil pengguna
+    public function updateProfile(Request $request, $id)
+    {
+        // Hanya boleh update profil sendiri
+        $authUser = $request->user();
+        if (!$authUser || (string)$authUser->id !== (string)$id) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Unauthorized to update this profile',
+            ], 403);
+        }
+
+        $validated = $request->validate([
+            'name' => 'nullable|string',
+            'phone' => 'nullable|string',
+            'address' => 'nullable|string',
+            'province_id' => 'nullable|string',
+            'city_id' => 'nullable|string',
+            'district_id' => 'nullable|string',
+            'foto' => 'nullable|string', // URL atau path gambar
+            'password' => 'nullable|string|min:6',
+            'c_password' => 'nullable|string|same:password',
+        ]);
+
+        $user = User::findOrFail($id);
+        // Hindari menulis password kosong: exclude password/c_password dari fill
+        $updateData = collect($validated)->except(['password', 'c_password'])->all();
+        $user->fill($updateData);
+        // Hanya update password bila diisi
+        if ($request->filled('password')) {
+            $user->password = Hash::make($request->input('password'));
+        }
+        $user->save();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Profile updated successfully',
             'user' => $user,
         ], 200);
     }

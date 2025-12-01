@@ -27,16 +27,19 @@ class Order extends Model
     ];
 
     /**
-     * The attributes that should be cast to native types.
+     * Get the attributes that should be cast.
      *
-     * @var array
+     * @return array<string, string>
      */
-    protected $casts = [
-        'id' => 'integer',
-        'user_id' => 'integer',
-        'shipping_id' => 'integer',
-        'payment_id' => 'integer',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'id' => 'integer',
+            'user_id' => 'integer',
+            'shipping_id' => 'integer',
+            'payment_id' => 'integer',
+        ];
+    }
 
     public function orderItems(): HasMany
     {

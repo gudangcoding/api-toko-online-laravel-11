@@ -20,18 +20,24 @@ class OrderItem extends Model
         'product_id',
         'quantity',
         'price',
+        'variant_model',
+        'variant_color',
+        'variant_size',
     ];
 
     /**
-     * The attributes that should be cast to native types.
+     * Get the attributes that should be cast.
      *
-     * @var array
+     * @return array<string, string>
      */
-    protected $casts = [
-        'id' => 'integer',
-        'order_id' => 'integer',
-        'product_id' => 'integer',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'id' => 'integer',
+            'order_id' => 'integer',
+            'product_id' => 'integer',
+        ];
+    }
 
     public function order(): BelongsTo
     {

@@ -21,12 +21,14 @@ class ProductFactory extends Factory
     public function definition(): array
     {
         return [
-            'Categories_id' => fake()->word(),
             'name' => fake()->name(),
-            'description' => fake()->text(),
-            'image' => 'https://picsum.photos/id/' . fake()->numberBetween(1, 1000) . '/200/300',
-            'price' => fake()->numberBetween(-10000, 10000),
-            'stock' => fake()->numberBetween(-10000, 10000),
+            'category_id' => fake()->word(),
+            'slug' => fake()->slug(),
+            'description' => fake()->text(1000),
+            'base_price' => fake()->randomFloat(0, 1000, 99999999),
+            'rating' => fake()->randomFloat(2, 0, 9.99),
+            'likes' => fake()->numberBetween(0, 10000),
+            'stock' => fake()->numberBetween(0, 10000),
         ];
     }
 }

@@ -2,16 +2,16 @@
 
 namespace Database\Seeders;
 
-use App\Models\Product;
+use App\Models\ProductVariant;
 use Illuminate\Database\Seeder;
 
-class ProductSeeder extends Seeder
+class ProductVariantSeeder extends Seeder
 {
     /**
      * Run the database seeds.
      */
     public function run(): void
     {
-        Product::factory()->count(1000)->create();
+        ProductVariant::factory()->count(5)->create();
     }
 }

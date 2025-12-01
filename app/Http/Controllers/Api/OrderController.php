@@ -1,9 +1,11 @@
 <?php
 
-namespace App\Http\Controllers\api;
+namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
+use App\Models\Product;
+use App\Models\ProductVariant;
 use App\Services\RajaOngkirService;
 use App\Services\MidtransService;
 use Illuminate\Http\Request;
@@ -24,6 +26,71 @@ class OrderController extends Controller
      */
     public function createOrder(Request $request)
     {
+        // Validasi input
+        $request->validate([
+            'items' => 'required|array',
+            'items.*.id' => 'required|exists:products,id',
+            'items.*.product_variant_id' => 'nullable|exists:product_variants,id',
+            'items.*.quantity' => 'required|integer|min:1',
+            'origin' => 'required',
+            'destination' => 'required',
+            'weight' => 'required|numeric',
+            'courier' => 'required'
+        ]);
+
+        // Validasi kelengkapan profil user sebelum melanjutkan checkout
+        $user = $request->user();
+        if ($user) {
+            $missing = [];
+            foreach (['province_id', 'city_id', 'district_id'] as $field) {
+                if (empty($user->{$field})) {
+                    $missing[] = $field;
+                }
+            }
+            // Tambahan yang umum diperlukan untuk pengiriman
+            foreach (['address', 'phone'] as $field) {
+                if (empty($user->{$field})) {
+                    $missing[] = $field;
+                }
+            }
+
+            if (!empty($missing)) {
+                return response()->json([
+                    'status' => 'error',
+                    'code' => 'PROFILE_INCOMPLETE',
+                    'message' => 'Profil belum lengkap. Lengkapi data sebelum melanjutkan pembayaran.',
+                    'missing_fields' => $missing,
+                    // Frontend dapat gunakan ini untuk mengarahkan ke halaman edit profil
+                    'redirect_to' => '/profile/edit',
+                    'profile_id' => $user->id,
+                ], 422);
+            }
+        }
+
+        // Hitung total harga barang
+        $totalPrice = 0;
+        foreach ($request->items as $item) {
+            $product = Product::findOrFail($item['id']);
+
+            $unitPrice = null;
+            if (!empty($item['product_variant_id'])) {
+                $variant = ProductVariant::where('id', $item['product_variant_id'])
+                    ->where('product_id', $product->id)
+                    ->first();
+
+                if ($variant) {
+                    $unitPrice = $variant->price ?? $product->price;
+                }
+            }
+
+            if ($unitPrice === null) {
+                // Fallback ke harga produk jika varian tidak dipilih atau tidak ditemukan
+                $unitPrice = $product->price;
+            }
+
+            $totalPrice += ($unitPrice * $item['quantity']);
+        }
+
         // Ambil data untuk perhitungan ongkir
         $origin = $request->origin; // ID kota asal
         $destination = $request->destination; // ID kota tujuan
@@ -33,18 +100,16 @@ class OrderController extends Controller
         // Cek ongkir dengan RajaOngkir
         $ongkir = $this->rajaOngkirService->checkOngkir($origin, $destination, $weight, $courier);
 
-        // Validasi ongkir
-        if (isset($ongkir->rajaongkir->results[0]->costs)) {
-            $costs = $ongkir->rajaongkir->results[0]->costs;
-            $shippingCost = $costs[0]->cost[0]->value; // Ambil ongkir pertama (sesuaikan jika ada opsi lain)
-        } else {
+        // Validasi ongkir (format baru: meta + data[])
+        if (!isset($ongkir->data) || empty($ongkir->data)) {
             return response()->json(['error' => 'Ongkir tidak ditemukan.'], 400);
         }
+        $shippingCost = (int) ($ongkir->data[0]['value'] ?? $ongkir->data[0]['value'] ?? 0);
 
         // Data order dan detail transaksi
         $orderDetails = [
             'order_id' => 'ORDER-' . time(),
-            'gross_amount' => 100000 + $shippingCost, // Total pembayaran, termasuk ongkir
+            'gross_amount' => $totalPrice + $shippingCost, // Total pembayaran dari items + ongkir
             'customer_name' => $request->customer_name,
             'customer_email' => $request->customer_email,
             'customer_phone' => $request->customer_phone,
@@ -83,6 +148,42 @@ class OrderController extends Controller
             return response()->json(['status' => 'success', 'data' => $callbackData]);
         } catch (\Exception $e) {
             return response()->json(['status' => 'failed', 'error' => $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Get provinces list from RajaOngkir
+     */
+    public function getProvinces()
+    {
+        try {
+            $provinces = $this->rajaOngkirService->getProvinces();
+            // Mengikuti format dokumentasi baru: langsung kembalikan meta + data
+            return response()->json($provinces);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get cities list from RajaOngkir
+     */
+    public function getCities(Request $request)
+    {
+        try {
+            // Get cities for specific province if province_id is provided
+            $provinceId = $request->query('province_id');
+            $cities = $this->rajaOngkirService->getCities($provinceId);
+            // Ikuti format baru: meta + data
+            return response()->json($cities);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ], 500);
         }
     }
 

@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Payment extends Model
+class VariantOption extends Model
 {
     use HasFactory;
 
@@ -16,10 +16,7 @@ class Payment extends Model
      * @var array
      */
     protected $fillable = [
-        'order_id',
-        'payment_type',
-        'payment_code',
-        'payment_status',
+        'name',
     ];
 
     /**
@@ -34,8 +31,8 @@ class Payment extends Model
         ];
     }
 
-    public function orders(): HasMany
+    public function variantValues(): HasMany
     {
-        return $this->hasMany(Order::class);
+        return $this->hasMany(VariantValue::class);
     }
 }

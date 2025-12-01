@@ -3,16 +3,38 @@ models:
     name: string
     relationships:
       hasMany: Product
-
+  
   Product:
-    Categories_id: foreignId:Categories
     name: string
-    description: longtext
-    image: string
-    price: integer
-    stock: integer
+    category_id: foreignId:categories
+    slug: string unique
+    description: longtext nullable
+    base_price: decimal:12,2
+    base_image: string nullable
+    rating: decimal:3,2 default:0
+    likes: integer default:0
+    stock: integer default:0
     relationships:
-      hasMany: OrderItem
+      hasMany: ProductVariant
+
+  ProductVariant:
+    product_id: foreignId:product
+    sku: string unique
+    price: decimal:12,2 nullable
+    stock: integer default:0
+    image: string nullable
+    relationships:
+      hasMany: VariantValue
+
+  VariantOption:
+    name: string
+    relationships:
+      hasMany: VariantValue
+
+  VariantValue:
+    product_variant_id: id foreign
+    variant_option_id: id foreign
+    value: string
 
   Order:
     user_id: foreignId:user
@@ -29,6 +51,9 @@ models:
     product_id: foreignId:product
     quantity: integer
     price: integer
+    variant_model: string default:standard
+    variant_color: string default:standard
+    variant_size: string default:standard
     relationships:
       belongsTo: order, product
 
@@ -51,4 +76,6 @@ models:
     relationships:
       hasMany: order
 
-seeders: Categories, product, user, order, order_item
+
+
+seeders: Categories, product, user, order, order_item, product_variant, variant_option, variant_value

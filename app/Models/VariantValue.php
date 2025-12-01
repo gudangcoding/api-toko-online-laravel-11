@@ -4,9 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class Payment extends Model
+class VariantValue extends Model
 {
     use HasFactory;
 
@@ -16,10 +16,9 @@ class Payment extends Model
      * @var array
      */
     protected $fillable = [
-        'order_id',
-        'payment_type',
-        'payment_code',
-        'payment_status',
+        'product_variant_id',
+        'variant_option_id',
+        'value',
     ];
 
     /**
@@ -31,11 +30,18 @@ class Payment extends Model
     {
         return [
             'id' => 'integer',
+            'product_variant_id' => 'integer',
+            'variant_option_id' => 'integer',
         ];
     }
 
-    public function orders(): HasMany
+    public function productVariant(): BelongsTo
     {
-        return $this->hasMany(Order::class);
+        return $this->belongsTo(ProductVariant::class);
+    }
+
+    public function variantOption(): BelongsTo
+    {
+        return $this->belongsTo(VariantOption::class);
     }
 }

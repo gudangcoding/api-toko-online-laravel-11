@@ -59,7 +59,76 @@ laravel : C:\laragon\www\tokoku
 	// Fungsi GET
 	export const getApi = async (endpoint, token = null) => {
   	try {
-    	const headers = token ? { Authorization: `Bearer ${token}` } : {};
+	    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+## Dokumentasi API (Scramble)
+
+Scramble adalah generator dokumentasi OpenAPI (Swagger) untuk Laravel yang otomatis membaca rute dan validasi tanpa perlu anotasi PHPDoc manual. Setelah terpasang, halaman dokumentasi tersedia di `/docs/api` dan spesifikasi OpenAPI di `/docs/api.json`.
+
+### Instalasi
+
+- `composer require dedoc/scramble`
+- Opsional: publish konfigurasi
+  - `php artisan vendor:publish --provider="Dedoc\Scramble\ScrambleServiceProvider" --tag="scramble-config"`
+
+### Konfigurasi
+
+- File: `config/scramble.php`
+- Opsi yang telah disesuaikan:
+  - `info.version`: `1.0.0`
+  - `info.description`: "Dokumentasi API untuk proyek Ecommerce menggunakan Laravel Sanctum."
+  - `ui.title`: menampilkan judul berdasarkan `APP_NAME`
+  - `servers`: menggunakan server lokal `api`
+- Middleware default menyertakan pembatasan akses via `RestrictedDocsAccess`, aman untuk produksi. Untuk pengembangan lokal, akses langsung ke `/docs/api` tersedia.
+
+### Menjalankan dan Mengakses
+
+- Jalankan server: `php artisan serve`
+- Buka dokumentasi: `http://127.0.0.1:8000/docs/api`
+- Spesifikasi OpenAPI JSON: `http://127.0.0.1:8000/docs/api.json`
+
+### Catatan
+
+- Scramble otomatis mendeteksi rute di `routes/api.php` dan akan memetakan middleware `auth:sanctum` sebagai skema autentikasi Bearer.
+- Untuk detail lengkap, lihat dokumentasi resmi Scramble.
+
+### Mengaktifkan tombol "Authorize" (Bearer token) di Scramble
+
+Jika di UI Scramble belum muncul tombol "Authorize" (ikon gembok) agar Anda dapat memasukkan header `Authorization: Bearer <token>`, Anda bisa menambahkan konfigurasi kecil pada `AppServiceProvider`.
+
+1. Buka file `app/Providers/AppServiceProvider.php` dan tambahkan kode berikut di dalam method `boot()`:
+
+```php
+use Dedoc\Scramble\Scramble;
+use Dedoc\Scramble\Support\Generator\OpenApi;
+use Dedoc\Scramble\Support\Generator\SecurityScheme;
+
+public function boot(): void
+{
+	// Tambahkan security scheme Bearer sehingga UI menampilkan tombol Authorize
+	Scramble::configure()
+		->withDocumentTransformers(function (OpenApi $openApi) {
+			$openApi->secure(
+				SecurityScheme::http('bearer')
+			);
+		});
+}
+```
+
+2. Hapus cache konfigurasi/view dan restart server:
+
+```powershell
+php artisan config:clear
+php artisan view:clear
+php artisan route:clear
+php artisan serve
+```
+
+3. Buka kembali `http://127.0.0.1:8000/docs/api` — sekarang harus muncul kontrol Authorize. Masukkan `Bearer <your_sanctum_token>` (atau hanya token, tergantung UI) untuk menguji endpoint yang dilindungi `auth:sanctum`.
+
+Catatan:
+- Jika proyek Anda sudah mendaftarkan transformer yang sama di `config/scramble.php` atau `app/Docs/ScrambleSecurityTransformer.php`, Anda tidak perlu menambahkan kode ini dua kali. Pilih salah satu pendekatan (config extension atau AppServiceProvider).
+- Untuk Sanctum SPA (cookie-based), Try It tidak dapat mengemulasikan cookie/CSRF; gunakan personal access token untuk pengujian API.
     	const response = await axios.get(`${BASE_URL}/${endpoint}`, { headers });
     	return response.data;
   	} catch (error) {

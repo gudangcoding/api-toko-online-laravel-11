@@ -18,18 +18,31 @@ class OrderItemRelationManager extends RelationManager
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('order_id')
-                    ->required()
-                    ->maxLength(255),
+                Forms\Components\Select::make('product_id')
+                    ->relationship('product', 'name')
+                    ->required(),
+                Forms\Components\Select::make('product_variant_id')
+                    ->relationship('variant', 'model')
+                    ->searchable()
+                    ->nullable(),
+                Forms\Components\TextInput::make('quantity')
+                    ->numeric()
+                    ->required(),
+                Forms\Components\TextInput::make('unit_price')
+                    ->numeric()
+                    ->required(),
             ]);
     }
 
     public function table(Table $table): Table
     {
         return $table
-            ->recordTitleAttribute('order_id')
+            ->recordTitleAttribute('product.name')
             ->columns([
-                Tables\Columns\TextColumn::make('order_id'),
+                Tables\Columns\TextColumn::make('product.name')->label('Product'),
+                Tables\Columns\TextColumn::make('variant.model')->label('Variant')->toggleable(),
+                Tables\Columns\TextColumn::make('quantity')->numeric(),
+                Tables\Columns\TextColumn::make('unit_price')->money('IDR'),
             ])
             ->filters([
                 //
